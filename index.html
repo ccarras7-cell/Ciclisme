@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="ca" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carles Cycling Analytics | Rendiment, Strava & Calendari de Curses</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23f97316'><circle cx='18.5' cy='17.5' r='3.5'/><circle cx='5.5' cy='17.5' r='3.5'/><circle cx='15' cy='5' r='1'/><path d='M12 17.5V14l-3-3 4-3 2 3h2'/></svg>">
+  <link rel="stylesheet" href="style.css">
+  <!-- Chart.js per a gràfiques interactives modernes -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="#" class="brand" onclick="switchTab('resum'); return false;">
+        <div class="brand-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="18.5" cy="17.5" r="3.5"/>
+            <circle cx="5.5" cy="17.5" r="3.5"/>
+            <circle cx="15" cy="5" r="1"/>
+            <path d="M12 17.5V14l-3-3 4-3 2 3h2"/>
+          </svg>
+        </div>
+        <div>
+          <div>Carles Cycling Hub</div>
+          <span class="brand-subtitle">Estadístiques & Curses</span>
+        </div>
+      </a>
+
+      <!-- PESTANYES DE NAVEGACIÓ -->
+      <nav class="nav-tabs">
+        <button class="nav-tab-btn active" data-tab="resum">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Resum
+        </button>
+        <button class="nav-tab-btn" data-tab="evolucio">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          Evolució
+        </button>
+        <button class="nav-tab-btn" data-tab="curses">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+          Les Meves Curses
+        </button>
+        <button class="nav-tab-btn" data-tab="calendari">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+          🗓️ Calendari Proves
+        </button>
+        <button class="nav-tab-btn strava-tab" data-tab="strava">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7.925 15.688h4.171"/></svg>
+          Strava Feed
+        </button>
+        <button class="nav-tab-btn" data-tab="comparador">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
+          Cara a Cara
+        </button>
+        <button class="nav-tab-btn" data-tab="gestio">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Dades & Sheets
+        </button>
+      </nav>
+
+      <!-- ACCIONS RÀPIDES -->
+      <div class="nav-actions">
+        <button class="btn btn-secondary btn-sm" id="btn-sync-sheets" onclick="syncFromGoogleSheets(true)" title="Sincronitzar amb el Google Sheet">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+          <span>Sincronitzar Sheets</span>
+        </button>
+
+        <button class="btn btn-ghost" id="theme-toggle" title="Canviar tema">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+        </button>
+
+        <button class="btn btn-primary btn-sm" onclick="openAddRaceModal()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          + Cursa
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTINGUT PRINCIPAL -->
+  <main class="main-content">
+
+    <!-- 1. PESTANYA: RESUM GLOBAL -->
+    <section id="tab-resum" class="tab-pane active">
+      <div class="hero-highlights">
+        <div class="highlight-box">
+          <div class="highlight-icon-wrap">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+          </div>
+          <div class="highlight-content">
+            <h4>Rècord de Quilòmetres</h4>
+            <p id="highlight-best-year">2023 (15.139,1 km)</p>
+            <span>Any més prolífic en volum</span>
+          </div>
+        </div>
+
+        <div class="highlight-box" style="border-color: rgba(56, 189, 248, 0.3);">
+          <div class="highlight-icon-wrap" style="background: linear-gradient(135deg, #0284c7, #38bdf8);">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 22 22 22 12 2"/><line x1="12" y1="11" x2="12" y2="17"/></svg>
+          </div>
+          <div class="highlight-content">
+            <h4>Rècord de Desnivell Positiu</h4>
+            <p id="highlight-best-dplus">2023 (206.512 m)</p>
+            <span style="color:#38bdf8;">+200k metres escalats</span>
+          </div>
+        </div>
+
+        <div class="highlight-box" style="border-color: rgba(16, 185, 129, 0.3);">
+          <div class="highlight-icon-wrap" style="background: linear-gradient(135deg, #059669, #10b981);">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div class="highlight-content">
+            <h4>Millor Velocitat Mitjana</h4>
+            <p id="highlight-best-speed">2024 (25,6 km/h)</p>
+            <span style="color:#10b981;">Any de màxima eficiència</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI GRID -->
+      <div class="kpi-grid">
+        <div class="kpi-card" style="--kpi-color: #f97316;">
+          <div class="kpi-header">
+            <span class="kpi-label">Quilòmetres Totals</span>
+            <div class="kpi-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>
+            </div>
+          </div>
+          <div class="kpi-value"><span id="kpi-total-km">0</span><span class="kpi-unit">km</span></div>
+          <div class="kpi-footer">
+            <span class="kpi-badge" id="kpi-total-km-desc">1,6 voltes al món</span>
+          </div>
+        </div>
+
+        <div class="kpi-card" style="--kpi-color: #38bdf8;">
+          <div class="kpi-header">
+            <span class="kpi-label">Desnivell Positiu</span>
+            <div class="kpi-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 22 22 22 12 2"/></svg>
+            </div>
+          </div>
+          <div class="kpi-value"><span id="kpi-total-desnivell">0</span><span class="kpi-unit">m D+</span></div>
+          <div class="kpi-footer">
+            <span class="kpi-badge info" id="kpi-total-desnivell-desc">102x cims de l'Everest</span>
+          </div>
+        </div>
+
+        <div class="kpi-card" style="--kpi-color: #a855f7;">
+          <div class="kpi-header">
+            <span class="kpi-label">Hores de Pedalada</span>
+            <div class="kpi-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+          </div>
+          <div class="kpi-value"><span id="kpi-total-hores">0</span><span class="kpi-unit">h</span></div>
+          <div class="kpi-footer">
+            <span class="kpi-badge" style="background:rgba(168,85,247,0.15); color:#c084fc;" id="kpi-total-hores-desc">Temps acumulat</span>
+          </div>
+        </div>
+
+        <div class="kpi-card" style="--kpi-color: #10b981;">
+          <div class="kpi-header">
+            <span class="kpi-label">Velocitat Mitjana Global</span>
+            <div class="kpi-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4"/><path d="m4.93 4.93 2.83 2.83"/><path d="M2 12h4"/><path d="m4.93 19.07 2.83-2.83"/><path d="M12 22v-4"/><path d="m16.24 16.24 2.83 2.83"/><path d="M22 12h-4"/><path d="m16.24 7.76 2.83-2.83"/></svg>
+            </div>
+          </div>
+          <div class="kpi-value"><span id="kpi-mitjana-global">0</span><span class="kpi-unit">km/h</span></div>
+          <div class="kpi-footer">
+            <span class="kpi-badge">Mitjana històrica</span>
+          </div>
+        </div>
+
+        <div class="kpi-card" style="--kpi-color: #facc15;">
+          <div class="kpi-header">
+            <span class="kpi-label">Grans Marxes</span>
+            <div class="kpi-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+            </div>
+          </div>
+          <div class="kpi-value"><span id="kpi-total-curses">0</span><span class="kpi-unit">events</span></div>
+          <div class="kpi-footer">
+            <span class="kpi-badge info" id="kpi-total-curses-desc">2022 - 2026</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- VISTA RÀPIDA DE GRANS MARXES -->
+      <div class="card" style="margin-bottom: 2rem;">
+        <div class="card-header">
+          <div>
+            <h3 class="card-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-orange)" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              Grans Fites & Marxes Mítiques Finalitzades
+            </h3>
+            <p class="card-desc">Proves d'alta exigència del calendari ciclista internacional i nacional</p>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="switchTab('curses')">Veure totes les curses →</button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;">
+          <div style="background:var(--bg-primary); padding:1rem; border-radius:12px; border:1px solid var(--border-color);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+              <strong style="color:var(--text-primary); font-size:1rem;">Quebrantahuesos</strong>
+              <span class="difficulty-badge diff-extreme">3 Edicions Sub-7h</span>
+            </div>
+            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.5rem;">
+              2024: 6h58'51" (27,8 km/h)<br>
+              2025: 7h00'51" (27,9 km/h)<br>
+              2026: 6h58'47" (27,6 km/h)
+            </p>
+            <small style="color:var(--accent-orange); font-weight:600;">Consistent en una de les marxes més dures d'Europa</small>
+          </div>
+
+          <div style="background:var(--bg-primary); padding:1rem; border-radius:12px; border:1px solid var(--border-color);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+              <strong style="color:var(--text-primary); font-size:1rem;">Mallorca 312</strong>
+              <span class="difficulty-badge diff-extreme">309 km · 4.543 m</span>
+            </div>
+            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.5rem;">
+              Any 2023 · Temps: 11h54'14"<br>
+              Velocitat Mitjana: 25,9 km/h
+            </p>
+            <small style="color:#38bdf8; font-weight:600;">L'ultrafons de referència a les Illes Balears</small>
+          </div>
+
+          <div style="background:var(--bg-primary); padding:1rem; border-radius:12px; border:1px solid var(--border-color);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+              <strong style="color:var(--text-primary); font-size:1rem;">La Purito Andorra</strong>
+              <span class="difficulty-badge diff-extreme">4.756 m D+</span>
+            </div>
+            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.5rem;">
+              Any 2024 · Temps: 7h17'39"<br>
+              113 km amb els ports més durs dels Pirineus
+            </p>
+            <small style="color:#f87171; font-weight:600;">Rècord de pendent mitjà: 42,1 m/km!</small>
+          </div>
+
+          <div style="background:var(--bg-primary); padding:1rem; border-radius:12px; border:1px solid var(--border-color);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+              <strong style="color:var(--text-primary); font-size:1rem;">Tour de Flandes & Dolomites</strong>
+              <span class="difficulty-badge diff-hard">Monuments</span>
+            </div>
+            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.5rem;">
+              Flandes Cyclo 2022: 200 km (24,0 km/h)<br>
+              Maratona Dolomites 2025: 136 km (4.294 m D+)
+            </p>
+            <small style="color:#34d399; font-weight:600;">Murs flamencs i colls mítics dels Alps italians</small>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. PESTANYA: EVOLUCIÓ ANUAL -->
+    <section id="tab-evolucio" class="tab-pane">
+      <div class="card" style="margin-bottom: 2rem;">
+        <div class="card-header">
+          <div>
+            <h3 class="card-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-orange)" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+              Evolució Anual de Volum i Desnivell
+            </h3>
+            <p class="card-desc">Quilòmetres totals anuals (barres taronges) i Desnivell acumulat en metres (línia blava)</p>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openAddYearModal()">+ Afegir Any</button>
+        </div>
+        <div class="chart-container" style="height: 380px;">
+          <canvas id="chart-annual-main"></canvas>
+        </div>
+      </div>
+
+      <div class="charts-grid">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">Hores de Dedicació & Velocitat Mitjana</h3>
+              <p class="card-desc">Temps d'entrenament (h) i velocitat mitjana anual (km/h)</p>
+            </div>
+          </div>
+          <div class="chart-container">
+            <canvas id="chart-annual-secondary"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">Coeficient Anual</h3>
+              <p class="card-desc">Índex de rendiment / coeficient anual</p>
+            </div>
+          </div>
+          <div class="chart-container">
+            <canvas id="chart-annual-coef"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h3 class="card-title">Taula de Dades Anuals</h3>
+            <p class="card-desc">Històric de totals anuals i variacions interanuals</p>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="openAddYearModal()">+ Nou Any</button>
+        </div>
+
+        <div class="table-responsive">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Any</th>
+                <th>Kilòmetres</th>
+                <th>Temps (h)</th>
+                <th>Desnivell (m)</th>
+                <th>Velocitat Mitjana</th>
+                <th>Coeficient</th>
+                <th>Ràtio D+/km</th>
+                <th style="text-align:right;">Accions</th>
+              </tr>
+            </thead>
+            <tbody id="annual-table-body">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. PESTANYA: LES MEVES CURSES -->
+    <section id="tab-curses" class="tab-pane">
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card-header">
+          <div>
+            <h3 class="card-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-orange)" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+              El Meu Històric de Curses & Marxes Cicloturistes
+            </h3>
+            <p class="card-desc">Detall de les teves participacions, temps oficials, desnivell i mitjanes aconseguides</p>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openAddRaceModal()">+ Nova Cursa</button>
+        </div>
+
+        <div class="controls-bar">
+          <div class="filters-group">
+            <div class="search-box">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              <input type="text" id="races-search-input" placeholder="Cercar cursa (ex: Quebrantahuesos, Mallorca...)">
+            </div>
+
+            <select id="races-filter-year" class="select-custom">
+              <option value="all">Tots els anys</option>
+            </select>
+
+            <select id="races-sort-select" class="select-custom">
+              <option value="data-desc">Data (més recents primer)</option>
+              <option value="data-asc">Data (més antigues primer)</option>
+              <option value="dist-desc">Distància (més llargues)</option>
+              <option value="dplus-desc">Desnivell (més metres)</option>
+              <option value="speed-desc">Velocitat Mitjana (més ràpides)</option>
+              <option value="time-asc">Temps (més ràpid)</option>
+            </select>
+          </div>
+
+          <span id="races-count-label" style="font-size:0.85rem; color:var(--text-secondary); font-weight:600;">16 marxes mostrades</span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Any</th>
+                <th>Data</th>
+                <th>Cursa</th>
+                <th>Distància (km)</th>
+                <th>Temps</th>
+                <th>Desnivell (m)</th>
+                <th>Pendent Relatiu</th>
+                <th>Mitjana (km/h)</th>
+                <th style="text-align:right;">Accions</th>
+              </tr>
+            </thead>
+            <tbody id="races-table-body">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. PESTANYA: CALENDARI DE PROVES (BATTISTRADA, REKO, FINISHERS, GF360, SPORTPLAN) -->
+    <section id="tab-calendari" class="tab-pane">
+      <div class="calendar-banner">
+        <div>
+          <h2 style="font-size: 1.35rem; font-weight: 800; color: var(--text-primary); display:flex; align-items:center; gap:0.6rem;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.2"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+            Calendari Oficial de Marxes Cicloturistes & Gran Fondo (2026)
+          </h2>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem;">
+            Proves seleccionades directament de les principals plataformes especialitzades en ciclisme de resistència:
+          </p>
+          <div class="calendar-sources-row">
+            <a href="https://battistrada.com/" target="_blank" class="platform-pill battistrada">Battistrada.com ↗</a>
+            <a href="https://reko-app.com/" target="_blank" class="platform-pill reko">REKO App ↗</a>
+            <a href="https://finishers.com/" target="_blank" class="platform-pill finishers">Finishers.com ↗</a>
+            <a href="https://granfondo360.com/" target="_blank" class="platform-pill granfondo360">Gran Fondo 360 ↗</a>
+            <a href="https://sportplan.es/" target="_blank" class="platform-pill sportplan">Sportplan ↗</a>
+          </div>
+        </div>
+        <div>
+          <span id="calendar-count-badge" class="sync-status-pill online">17 proves carregades</span>
+        </div>
+      </div>
+
+      <!-- FILTRES DEL CALENDARI -->
+      <div class="controls-bar" style="margin-bottom: 1.5rem;">
+        <div class="filters-group">
+          <div class="search-box">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" id="calendar-search-input" placeholder="Cercar prova, ciutat o port (ex: Vallter, Marie Blanque, Mallorca...)">
+          </div>
+
+          <select id="calendar-platform-filter" class="select-custom">
+            <option value="all">Totes les plataformes</option>
+            <option value="granfondo360">Gran Fondo 360 (Costa Brava, Montseny, Pirineus)</option>
+            <option value="battistrada">Battistrada.com (Europa & Gran Fondo)</option>
+            <option value="reko">REKO App (Espanya & Resistència)</option>
+            <option value="finishers">Finishers.com (Calendari Internacional)</option>
+            <option value="sportplan">Sportplan (Plans & Circuits)</option>
+          </select>
+
+          <select id="calendar-month-filter" class="select-custom">
+            <option value="all">Tots els mesos</option>
+            <option value="març">Març</option>
+            <option value="abril">Abril</option>
+            <option value="maig">Maig</option>
+            <option value="juny">Juny</option>
+            <option value="juliol">Juliol</option>
+            <option value="agost">Agost</option>
+            <option value="setembre">Setembre</option>
+            <option value="octubre">Octubre</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- GRAELLA DE TARGETES DEL CALENDARI -->
+      <div class="calendar-grid" id="calendar-events-grid">
+        <!-- Renderitzat per JS -->
+      </div>
+    </section>
+
+    <!-- 5. PESTANYA: STRAVA ATHLETE & FEED -->
+    <section id="tab-strava" class="tab-pane">
+      
+      <!-- STRAVA ATHLETE BANNER -->
+      <div class="strava-banner">
+        <div class="strava-athlete-info">
+          <img src="https://dgalywyr863hv.cloudfront.net/pictures/athletes/66178219/16558824/6/medium.jpg" alt="Carles Carrascosa" class="strava-avatar" onerror="this.src='data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%23fc5200\'><circle cx=\'12\' cy=\'8\' r=\'4\'/><path d=\'M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2\'/></svg>'">
+          <div>
+            <h2 class="strava-athlete-name">
+              Carles Carrascosa Sanchis
+              <span class="strava-badge-premium">★ Strava Premium</span>
+            </h2>
+            <div class="strava-athlete-meta">
+              <span>🆔 Strava ID: <strong>66178219</strong></span>
+              <span>📍 Catalunya, Espanya</span>
+              <span>🚴 Road Cyclist & Gran Fondo Finisher</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:0.6rem; align-items:center; flex-wrap:wrap;">
+          <a href="https://www.strava.com/athletes/66178219" target="_blank" class="btn btn-strava">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7.925 15.688h4.171"/></svg>
+            Obrir el meu Perfil a Strava ↗
+          </a>
+        </div>
+      </div>
+
+      <!-- STRAVA KPIS RECENTS -->
+      <div class="kpi-grid" style="margin-bottom: 2rem;">
+        <div class="kpi-card" style="--kpi-color: var(--strava-orange);">
+          <div class="kpi-header">
+            <span class="kpi-label">Volum Recent a Strava</span>
+            <div class="kpi-icon" style="color:var(--strava-orange);">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>
+            </div>
+          </div>
+          <div class="kpi-value"><span id="strava-kpi-km">0 km</span></div>
+          <div class="kpi-footer"><span class="kpi-badge">Últimes sessions registrades</span></div>
+        </div>
+
+        <div class="kpi-card" style="--kpi-color: #38bdf8;">
+          <div class="kpi-header">
+            <span class="kpi-label">Desnivell Positiu</span>
+            <div class="kpi-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 22 22 22 12 2"/></svg>
+            </div>
+          </div>
+          <div class="kpi-value"><span id="strava-kpi-dplus">0 m</span></div>
+          <div class="kpi-footer"><span class="kpi-badge info">Metres acumulats</span></div>
+        </div>
+
+        <div class="kpi-card" style="--kpi-color: #facc15;">
+          <div class="kpi-header">
+            <span class="kpi-label">Potència Mitjana Estimada</span>
+            <div class="kpi-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            </div>
+          </div>
+          <div class="kpi-value"><span id="strava-kpi-watts">215 W</span></div>
+          <div class="kpi-footer"><span class="kpi-badge" style="background:rgba(250,204,21,0.15); color:#facc15;">Rendiment mitjà</span></div>
+        </div>
+      </div>
+
+      <!-- CONNEXIÓ STRAVA API DIRECTA -->
+      <div class="card" style="margin-bottom: 2rem; border-color: rgba(252, 82, 0, 0.35);">
+        <div class="card-header">
+          <div>
+            <h3 class="card-title" style="color:var(--strava-orange);">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7.925 15.688h4.171"/></svg>
+              Sincronització en Directe amb Strava API
+            </h3>
+            <p class="card-desc">
+              Pots connectar el teu compte introduint el teu Access Token de Strava (disponible gratuïtament a <a href="https://www.strava.com/settings/api" target="_blank" class="footer-link">strava.com/settings/api</a>) per actualitzar les teves noves sortides en temps real.
+            </p>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
+          <input type="password" id="strava-token-input" class="form-input" placeholder="Introdueix el teu Personal Access Token de Strava..." style="flex:1; min-width:280px;">
+          <button class="btn btn-strava" onclick="connectStravaAPI()">Connectar Strava API</button>
+        </div>
+      </div>
+
+      <!-- FEED D'ACTIVITATS RECENTS -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h3 class="card-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--strava-orange)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              Feed de Sortides & Activitats Recents de Carles
+            </h3>
+            <p class="card-desc">Detalls de rendiment, potència, pulsacions i segments de Strava</p>
+          </div>
+        </div>
+
+        <div class="strava-feed-grid" id="strava-activities-feed">
+          <!-- Renderitzat per JS -->
+        </div>
+      </div>
+
+    </section>
+
+    <!-- 6. PESTANYA: CARA A CARA (COMPARADOR) -->
+    <section id="tab-comparador" class="tab-pane">
+      <div class="card" style="margin-bottom: 2rem;">
+        <div class="card-header">
+          <div>
+            <h3 class="card-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-orange)" stroke-width="2"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
+              Comparativa Any vs Any
+            </h3>
+            <p class="card-desc">Selecciona dos anys per comparar el volum, rendiment i mètriques clau</p>
+          </div>
+        </div>
+
+        <div class="vs-container">
+          <div class="vs-side">
+            <label class="form-label">Primer Any</label>
+            <select id="compare-year-1" class="select-custom" style="width: 100%; text-align: center; font-size:1.1rem; font-weight:700;">
+            </select>
+          </div>
+
+          <div class="vs-badge">VS</div>
+
+          <div class="vs-side">
+            <label class="form-label">Segon Any</label>
+            <select id="compare-year-2" class="select-custom" style="width: 100%; text-align: center; font-size:1.1rem; font-weight:700;">
+            </select>
+          </div>
+        </div>
+
+        <div class="vs-metrics-table" id="compare-metrics-container">
+        </div>
+
+        <div style="margin-top: 2rem;">
+          <h4 style="font-size: 1rem; color: var(--text-primary); text-align: center; margin-bottom: 1rem;">
+            Perfil Multidimensional de Rendiment (Normalitzat)
+          </h4>
+          <div class="chart-container" style="height: 340px;">
+            <canvas id="chart-compare-radar"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h3 class="card-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-orange)" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+              Històric per Marxa (Evolució d'Edicions)
+            </h3>
+            <p class="card-desc" id="race-history-notice">Compara els teus temps i velocitats mitjanes en una mateixa prova</p>
+          </div>
+          <div>
+            <select id="compare-race-select" class="select-custom">
+            </select>
+          </div>
+        </div>
+
+        <div class="chart-container" style="height: 340px;">
+          <canvas id="chart-race-history"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. PESTANYA: GESTIÓ DE DADES & GOOGLE SHEETS -->
+    <section id="tab-gestio" class="tab-pane">
+      <div class="card" style="margin-bottom: 1.75rem; border: 1px solid rgba(16, 185, 129, 0.4); background: linear-gradient(135deg, rgba(16, 185, 129, 0.04), var(--bg-card));">
+        <div class="card-header">
+          <div>
+            <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.25rem;">
+              <h3 class="card-title" style="color:var(--text-primary);">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                Connexió en Directe amb Google Sheets
+              </h3>
+              <span id="sheets-sync-status-badge" class="sync-status-pill offline">
+                <span class="status-dot"></span> Comprovant...
+              </span>
+            </div>
+            <p class="card-desc" id="sheets-sync-status-text">
+              Sincronització automàtica cada vegada que s'obre la web o en fer clic a sincronitzar.
+            </p>
+          </div>
+          <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+            <button class="btn btn-secondary btn-sm" onclick="openSheetsHelpModal()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              Com compartir el document
+            </button>
+            <button class="btn btn-primary btn-sm" id="btn-sync-sheets-panel" onclick="syncFromGoogleSheets(true)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+              Sincronitzar Ara
+            </button>
+          </div>
+        </div>
+
+        <div style="background:var(--bg-primary); padding:1.25rem; border-radius:12px; border:1px solid var(--border-color); margin-top:1rem;">
+          <div class="form-group">
+            <label class="form-label">Enllaç del teu Google Sheet</label>
+            <input type="text" id="input-sheets-url" class="form-input" placeholder="https://docs.google.com/spreadsheets/d/...">
+            <p class="form-help">Enllaç directe al teu document. Les noves dades que escriguis a Google Sheets es reflectiran automàticament a la web.</p>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">GID de la Pestanya (Full)</label>
+              <input type="text" id="input-sheets-gid" class="form-input" placeholder="781384489">
+              <p class="form-help">Identificador del full (visible a la URL després de gid=).</p>
+            </div>
+            <div class="form-group" style="display:flex; flex-direction:column; justify-content:center;">
+              <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; font-size:0.9rem; font-weight:600; color:var(--text-primary); margin-top:1rem;">
+                <input type="checkbox" id="input-sheets-autosync" checked style="width:18px; height:18px; accent-color:var(--accent-orange);">
+                Sincronització automàtica en obrir la pàgina
+              </label>
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; margin-top:0.5rem;">
+            <a href="https://docs.google.com/spreadsheets/d/15PXPlsUNbBf0eT6tQCPsjFI0lWdSm6TES9IUET-57KE/edit?gid=781384489" target="_blank" class="footer-link" style="display:flex; align-items:center; gap:0.35rem; font-size:0.85rem;">
+              Obrir el document a Google Sheets ↗
+            </a>
+            <button class="btn btn-secondary btn-sm" onclick="saveSheetsConfigFromUI()">Desar Configuració i Reconnectar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card-header">
+          <div>
+            <h3 class="card-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-orange)" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Còpies de Seguretat Locals (Fitxers)
+            </h3>
+            <p class="card-desc">Descarrega còpies en JSON o CSV per tenir un backup al teu disc dur</p>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 1rem;">
+          <div style="background:var(--bg-primary); padding:1.25rem; border-radius:12px; border:1px solid var(--border-color);">
+            <h4 style="font-size: 1rem; color:var(--text-primary); margin-bottom: 0.5rem; display:flex; align-items:center; gap:0.5rem;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-orange)" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Exportar
+            </h4>
+            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom: 1rem;">
+              Descarrega totes les dades en fitxer estructurat.
+            </p>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+              <button class="btn btn-secondary btn-sm" onclick="exportDataJSON()">Descarregar JSON</button>
+              <button class="btn btn-secondary btn-sm" onclick="exportDataCSV()">Descarregar CSV</button>
+            </div>
+          </div>
+
+          <div style="background:var(--bg-primary); padding:1.25rem; border-radius:12px; border:1px solid var(--border-color);">
+            <h4 style="font-size: 1rem; color:var(--text-primary); margin-bottom: 0.5rem; display:flex; align-items:center; gap:0.5rem;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-blue)" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Importar Fitxer JSON
+            </h4>
+            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom: 1rem;">
+              Restaura dades des d'un fitxer JSON prèviament exportat.
+            </p>
+            <input type="file" id="import-json-input" accept=".json" style="display:none;" onchange="importDataJSON(event)">
+            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('import-json-input').click()">Seleccionar fitxer JSON</button>
+          </div>
+
+          <div style="background:var(--bg-primary); padding:1.25rem; border-radius:12px; border:1px solid var(--border-color);">
+            <h4 style="font-size: 1rem; color:var(--text-primary); margin-bottom: 0.5rem; display:flex; align-items:center; gap:0.5rem;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+              Dades Originals
+            </h4>
+            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom: 1rem;">
+              Torna als registres inicials de les captures de pantalla.
+            </p>
+            <button class="btn btn-danger btn-sm" onclick="resetToDefaultData()">Restablir Dades de Fàbrica</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+            Publicació a GitHub Pages (https://github.com/ccarras7-cell/prova1)
+          </h3>
+        </div>
+        <p style="font-size:0.9rem; color:var(--text-secondary); line-height: 1.6;">
+          Quan publiquis la web a GitHub Pages, qualsevol canvi que facis al Google Sheet es veurà reflectit per a tothom automàticament sense necessitat de fer cap `git push` addicional!
+        </p>
+        <ol style="margin: 1rem 0 1rem 1.5rem; font-size:0.9rem; color:var(--text-secondary); line-height: 1.8;">
+          <li>Fes <strong>push</strong> del repositori amb aquests fitxers a <a href="https://github.com/ccarras7-cell/prova1" target="_blank" class="footer-link">ccarras7-cell/prova1</a>.</li>
+          <li>A GitHub, ves a <strong>Settings → Pages</strong>.</li>
+          <li>A <strong>Build and deployment</strong>, selecciona <strong>Source: Deploy from a branch</strong>.</li>
+          <li>Tria la branca <strong>main</strong> i carpeta <strong>/ (root)</strong> i desa.</li>
+          <li>En pocs segons, la teva web estarà activa a: <strong>https://ccarras7-cell.github.io/prova1/</strong>!</li>
+        </ol>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL: AJUDA PER COMPARTIR GOOGLE SHEETS -->
+  <div class="modal-overlay" id="modal-sheets-help">
+    <div class="modal" style="max-width: 620px;">
+      <div class="modal-header">
+        <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary); display:flex; align-items:center; gap:0.5rem;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+          Com activar la sincronització de Google Sheets
+        </h3>
+        <button class="btn btn-ghost" onclick="closeModal('modal-sheets-help')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:0.9rem; color:var(--text-secondary); margin-bottom:1rem; line-height:1.5;">
+          Perquè la teva pàgina web pugui consultar el document sense que els visitants hagin d'iniciar sessió amb el teu compte de Google, el full de càlcul ha de tenir permisos de lectura pública per a qui tingui l'enllaç:
+        </p>
+
+        <div class="step-list">
+          <div class="step-item">
+            <div class="step-number">1</div>
+            <div class="step-content">
+              <h4>Obre el teu Google Sheet</h4>
+              <p>Fes clic aquí per obrir el document: <a href="https://docs.google.com/spreadsheets/d/15PXPlsUNbBf0eT6tQCPsjFI0lWdSm6TES9IUET-57KE/edit?gid=781384489" target="_blank" class="footer-link">Obrir Google Sheets ↗</a></p>
+            </div>
+          </div>
+
+          <div class="step-item">
+            <div class="step-number">2</div>
+            <div class="step-content">
+              <h4>Prem el botó blau "Compartir" (Share)</h4>
+              <p>El trobaràs a la cantonada superior dreta de la pantalla de Google Sheets.</p>
+            </div>
+          </div>
+
+          <div class="step-item">
+            <div class="step-number">3</div>
+            <div class="step-content">
+              <h4>Canvia a "Qualsevol persona amb l'enllaç"</h4>
+              <p>A l'apartat <strong>Accés general</strong>, canvia l'opció de <em>Restringit</em> a <strong>Qualsevol persona amb l'enllaç</strong> i assegura't que el rol a la dreta sigui <strong>Lector</strong>.</p>
+            </div>
+          </div>
+
+          <div class="step-item">
+            <div class="step-number">4</div>
+            <div class="step-content">
+              <h4>Prem "Fet" i torna aquí a sincronitzar</h4>
+              <p>Després de desar, torna a la teva web i prem el botó <strong>Sincronitzar Sheets</strong> a la barra superior!</p>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:rgba(249,115,22,0.1); border:1px solid rgba(249,115,22,0.3); border-radius:10px; padding:0.85rem; font-size:0.85rem; color:var(--text-primary);">
+          🔒 <strong>Privacitat i Seguretat:</strong> En triar el rol <em>Lector</em>, ningú pot modificar les teves dades al full de càlcul; només tu tens permisos d'edició.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <a href="https://docs.google.com/spreadsheets/d/15PXPlsUNbBf0eT6tQCPsjFI0lWdSm6TES9IUET-57KE/edit?gid=781384489" target="_blank" class="btn btn-secondary">Obrir Google Sheets ↗</a>
+        <button class="btn btn-primary" onclick="closeModal('modal-sheets-help'); syncFromGoogleSheets(true);">Ja ho he compartit, Sincronitzar!</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: AFEGIR / EDITAR ANY -->
+  <div class="modal-overlay" id="modal-year">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modal-year-title" style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary);">Afegir Estadístiques Anuals</h3>
+        <button class="btn btn-ghost" onclick="closeModal('modal-year')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Any</label>
+          <input type="number" id="form-year-any" class="form-input" placeholder="Ex: 2026">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Kilòmetres totals</label>
+            <input type="number" step="0.1" id="form-year-km" class="form-input" placeholder="Ex: 12500.5">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Temps total (hores)</label>
+            <input type="number" step="0.1" id="form-year-temps" class="form-input" placeholder="Ex: 480.2">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Desnivell positiu (m)</label>
+            <input type="number" id="form-year-desnivell" class="form-input" placeholder="Ex: 175000">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Velocitat Mitjana (km/h)</label>
+            <input type="number" step="0.1" id="form-year-velocitat" class="form-input" placeholder="Ex: 25.4 (opcional, auto)">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Coeficient (opcional)</label>
+          <input type="number" step="0.01" id="form-year-coef" class="form-input" placeholder="Ex: 4.50">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('modal-year')">Cancel·lar</button>
+        <button class="btn btn-primary" onclick="saveYearForm()">Desar Any</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: AFEGIR / EDITAR CURSA -->
+  <div class="modal-overlay" id="modal-race">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modal-race-title" style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary);">Afegir Cursa o Marxa</h3>
+        <button class="btn btn-ghost" onclick="closeModal('modal-race')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Any</label>
+            <input type="number" id="form-race-any" class="form-input" placeholder="Ex: 2026">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Data</label>
+            <input type="text" id="form-race-data" class="form-input" placeholder="Ex: 20 juny o 20/06/2026">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nom de la Cursa / Marxa</label>
+          <input type="text" id="form-race-cursa" class="form-input" placeholder="Ex: Quebrantahuesos, Mussara Reus...">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Distància (km)</label>
+            <input type="number" step="0.1" id="form-race-distancia" class="form-input" placeholder="Ex: 195.9">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Temps (hh:mm'ss")</label>
+            <input type="text" id="form-race-temps" class="form-input" placeholder="Ex: 6h58'47&quot;">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Desnivell (m)</label>
+            <input type="number" id="form-race-desnivell" class="form-input" placeholder="Ex: 3500">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Velocitat Mitjana (km/h)</label>
+            <input type="number" step="0.1" id="form-race-mitjana" class="form-input" placeholder="Auto-càlcul si es deixa buit">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('modal-race')">Cancel·lar</button>
+        <button class="btn btn-primary" onclick="saveRaceForm()">Desar Cursa</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICACIONS -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- PEU DE PÀGINA -->
+  <footer class="footer">
+    <p>
+      🚲 <strong>Carles Cycling Analytics</strong> &bull; Repositori: <a href="https://github.com/ccarras7-cell/prova1" target="_blank" class="footer-link">ccarras7-cell/prova1</a> &bull; <a href="https://www.strava.com/athletes/66178219" target="_blank" class="footer-link" style="color:var(--strava-orange);">Perfil Strava ↗</a>
+    </p>
+    <p style="margin-top:0.35rem; font-size:0.75rem; color:var(--text-muted);">
+      Sincronitzat amb Google Sheets &bull; Calendari de proves de Battistrada, REKO App, Finishers, Gran Fondo 360 i Sportplan
+    </p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
